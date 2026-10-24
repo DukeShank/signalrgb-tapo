@@ -155,22 +155,15 @@ export function DiscoveryService() {
     };
 
     function serviceLogin() {
-        service.log("[Tapo] POST /login ...");
-        const xhr = new XMLHttpRequest();
-        xhr.open("POST", `http://${host}:${port}/login`, true);
-        xhr.setRequestHeader("Content-Type", "application/json");
-        xhr.onreadystatechange = function() {
-            if (xhr.readyState !== 4) return;
-            service.log("[Tapo] /login → HTTP " + xhr.status);
-            if (xhr.status === 200) {
-                discoveryToken = xhr.responseText.trim().replace(/^"|"$/g, "");
-                service.log("[Tapo] Discovery token acquired");
-                fetchDevices();
-            } else {
-                service.log("[Tapo] Discovery login failed — body: " + xhr.responseText);
-            }
-        };
-        xhr.send(JSON.stringify({ password: password }));
+        if (!password) {
+            service.log("[Tapo] Missing API key in plugin settings");
+            return;
+        }
+
+        // tapo-rest authenticates requests with a Bearer API key; it has no /login endpoint.
+        discoveryToken = password;
+        service.log("[Tapo] Using API key; fetching devices...");
+        fetchDevices();
     }
 
     function fetchDevices() {
@@ -349,20 +342,14 @@ function httpGet(path, callback) {
 // -- Auth & color commands ----------------------------------------------------
 
 function login() {
-    if (requestPending) return;
-    requestPending = true;
+    if (!controller.password) {
+        device.log(`[Tapo] [${controller.deviceName}] Missing API key`);
+        return;
+    }
 
-    device.log(`[Tapo] [${controller.deviceName}] POST /login ...`);
-    httpPost("/login", { password: controller.password }, (status, body) => {
-        requestPending = false;
-        device.log(`[Tapo] [${controller.deviceName}] /login → HTTP ${status}`);
-        if (status === 200) {
-            sessionToken = body.trim().replace(/^"|"$/g, "");
-            device.log(`[Tapo] [${controller.deviceName}] Session token acquired`);
-        } else {
-            device.log(`[Tapo] [${controller.deviceName}] Login failed — body: ${body}`);
-        }
-    });
+    // Reuse the configured tapo-rest API key for all device-action requests.
+    sessionToken = controller.password;
+    device.log(`[Tapo] [${controller.deviceName}] Using API key`);
 }
 
 function sendColor(hue, saturation, bri) {
