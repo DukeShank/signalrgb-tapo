@@ -86,6 +86,11 @@ export function DiscoveryService() {
         const savedPass      = service.getSetting("tapoRest",   "password");
         const savedFrameSkip = service.getSetting("tapoRender", "frameSkip");
         const savedMinDelta  = service.getSetting("tapoRender", "minDelta");
+        service.log(
+    "[Tapo] Loaded render settings: frameSkip=" +
+    JSON.stringify(savedFrameSkip) +
+    ", minDelta=" + JSON.stringify(savedMinDelta)
+);
 
         if (savedHost) host      = savedHost;
         if (savedPort) port      = parseInt(savedPort);
@@ -147,11 +152,22 @@ export function DiscoveryService() {
     this.setRenderConfig = function(newFrameSkip, newMinDelta) {
         const fs = parseInt(newFrameSkip);
         const md = parseInt(newMinDelta);
+        service.log(
+          "[Tapo] Render settings submitted: frameSkip=" +
+          JSON.stringify(newFrameSkip) +
+          ", minDelta=" + JSON.stringify(newMinDelta)
+        );
         if (!isNaN(fs) && fs >= 1) FRAME_SKIP = fs;
         if (!isNaN(md) && md >= 0) MIN_DELTA  = md;
 
         service.saveSetting("tapoRender", "frameSkip", String(FRAME_SKIP));
         service.saveSetting("tapoRender", "minDelta",  String(MIN_DELTA));
+        service.log(
+           "[Tapo] Render settings readback: frameSkip=" +
+           JSON.stringify(service.getSetting("tapoRender", "frameSkip")) +
+           ", minDelta=" +
+           JSON.stringify(service.getSetting("tapoRender", "minDelta"))
+        );
 
         disc.frameSkip = FRAME_SKIP;
         disc.minDelta  = MIN_DELTA;
