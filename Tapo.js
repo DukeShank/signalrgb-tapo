@@ -30,6 +30,15 @@ let lastHue        = -1;
 let lastSat        = -1;
 let lastBri        = -1;
 
+// -- Colour transition smoothing -----------------------------------------------
+let smoothedHue = null;
+let smoothedSat = null;
+let smoothedBri = null;
+
+// Fraction of the remaining colour difference applied per update.
+// Lower values produce slower, smoother transitions.
+const SMOOTHING_FACTOR = 0.30;
+
 // -- Device identity ----------------------------------------------------------
 
 export function Name()      { return "Tapo"; }
@@ -277,13 +286,43 @@ export function Render() {
         [r, g, b] = averageCanvas();
     }
 
-    const [h, s, v] = rgbToHsv(r, g, b);
-    const scaledBri = Math.round(v * (parseInt(brightnessScale) / 100));
-    const minDelta  = controller.minDelta;
+    const [targetHueRaw, targetSat, targetV] = rgbToHsv(r, g, b);
+    const targetHue = targetHueRaw % 360;
+    const targetBri = Math.round(
+        targetV * (parseInt(brightnessScale) / 100)
+    );
+
+    // Start at the first target colour.
+    if (smoothedHue === null) {
+        smoothedHue = targetHue;
+        smoothedSat = targetSat;
+        smoothedBri = targetBri;
+    } else {
+        // Follow the shortest route around the hue wheel.
+        const hueDifference =
+            ((targetHue - smoothedHue + 540) % 360) - 180;
+
+        smoothedHue =
+            (smoothedHue + hueDifference * SMOOTHING_FACTOR + 360) % 360;
+
+        smoothedSat += (targetSat - smoothedSat) * SMOOTHING_FACTOR;
+        smoothedBri += (targetBri - smoothedBri) * SMOOTHING_FACTOR;
+    }
+
+    const h = Math.round(smoothedHue) % 360;
+    const s = Math.round(smoothedSat);
+    const scaledBri = Math.round(smoothedBri);
+    const minDelta = controller.minDelta;
+
+    // Compare with the last sent colour, accounting for hue wraparound.
+    const hueDelta = lastHue === -1
+        ? Infinity
+        : Math.abs(((h - lastHue + 540) % 360) - 180);
 
     if (
-        Math.abs(h - lastHue)         < minDelta &&
-        Math.abs(s - lastSat)         < minDelta &&
+        lastHue !== -1 &&
+        hueDelta < minDelta &&
+        Math.abs(s - lastSat) < minDelta &&
         Math.abs(scaledBri - lastBri) < minDelta
     ) return;
 
