@@ -87,10 +87,10 @@ export function DiscoveryService() {
         const savedFrameSkip = service.getSetting("tapoRender", "frameSkip");
         const savedMinDelta  = service.getSetting("tapoRender", "minDelta");
         service.log(
-    "[Tapo] Loaded render settings: frameSkip=" +
-    JSON.stringify(savedFrameSkip) +
-    ", minDelta=" + JSON.stringify(savedMinDelta)
-);
+           "[Tapo] Loaded render settings: frameSkip=" +
+           JSON.stringify(savedFrameSkip) +
+           ", minDelta=" + JSON.stringify(savedMinDelta)
+        );
 
         if (savedHost) host      = savedHost;
         if (savedPort) port      = parseInt(savedPort);
