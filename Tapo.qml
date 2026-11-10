@@ -9,7 +9,7 @@ Item {
 		// ── tapo-rest connection config ───────────────────────────────────
 		Item {
 			width: 450
-			height: 158
+			height: 184
 
 			Rectangle {
 				width: parent.width
@@ -83,17 +83,18 @@ Item {
 					Row {
 						spacing: 8
 						Text {
-							text: "PASSWORD"; color: "#666"; font.family: "Poppins"
+							text: "API KEY"; color: "#666"; font.family: "Poppins"
 							font.pixelSize: 10; font.letterSpacing: 1; width: 70; height: 28
 							verticalAlignment: Text.AlignVCenter
 						}
 						Rectangle {
 							width: 180; height: 28; radius: 4; color: "#252525"
-							border.color: passwordField.activeFocus ? "#00b4d8" : "#383838"; border.width: 1
+							border.color: apiKeyField.activeFocus ? "#00b4d8" : "#383838"; border.width: 1
 							TextField {
-								id: passwordField
+								id: apiKeyField
 								anchors.fill: parent; leftPadding: 10
-								text: discovery.password || ""
+								text: discovery.apiKey || ""
+								placeholderText: "key from server.api_keys"
 								echoMode: TextInput.Password
 								color: theme.primarytextcolor
 								font.family: "Poppins"; font.pixelSize: 12; background: Item {}
@@ -109,9 +110,27 @@ Item {
 							MouseArea {
 								id: connMouse; anchors.fill: parent
 								hoverEnabled: true; cursorShape: Qt.PointingHandCursor
-								onClicked: discovery.setServerConfig(hostField.text, portField.text, passwordField.text)
+								onClicked: discovery.setServerConfig(hostField.text, portField.text, apiKeyField.text)
 							}
 						}
+					}
+
+					// Connection status from Tapo.js. discovery.status is a plain
+					// JavaScript property without change notification, so the
+					// text is read again every second.
+					Text {
+						id: statusText
+						width: parent.width
+						height: 18
+						text: "Status: " + (discovery.status || "")
+						color: "#888"; font.family: "Poppins"; font.pixelSize: 11
+						elide: Text.ElideRight
+						verticalAlignment: Text.AlignVCenter
+					}
+
+					Timer {
+						interval: 1000; running: true; repeat: true
+						onTriggered: statusText.text = "Status: " + (discovery.status || "")
 					}
 				}
 			}
@@ -246,7 +265,7 @@ Item {
 			id: controllerList
 			model: service.controllers
 			width: 450
-			height: parent.height - 158 - 118 - 30 - 24 // cards + header + spacing
+			height: parent.height - 184 - 118 - 30 - 24 // cards + header + spacing
 			clip: true
 
 			ScrollBar.vertical: ScrollBar {
@@ -295,7 +314,7 @@ Item {
 
 					Column {
 						x: 20; y: 44; spacing: 2
-						Text { text: dev.ip + ":" + dev.port; color: "#888"; font.family: "Poppins"; font.pixelSize: 11 }
+						Text { text: "tapo-rest " + dev.ip + ":" + dev.port; color: "#888"; font.family: "Poppins"; font.pixelSize: 11 }
 						Text { text: "device: " + dev.deviceName; color: "#666"; font.family: "Poppins"; font.pixelSize: 11 }
 					}
 
